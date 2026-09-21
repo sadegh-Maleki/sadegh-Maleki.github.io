@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Web OTP Demo</title>
+</head>
+
+<body>
+    <main>
+        <form id="otp-form">
+            <p>
+                Enter the digit you received
+            </p>
+            <div id="otp-field">
+                 <label for="otp-input">digit code</label>
+                <input type="text" inputmode="numeric" is="web-otp" id="otp-input" autocomplete="one-time-code"
+                    pattern="^([0-9]+)$" required />
+                <button onclick="startSmsListening()" style="background-color: green; color:#ffffff;padding: 10px; margin: 10px;">START LISSENING</button>
+                <button onclick="test()" style="background-color: orange; color:#000000;padding: 10px; margin: 10px;">TEST 5 second</button>
+            </div>
+        </form>
+    </main>
+</body>
+
+</html>
+<script>
+
+    let otp = null;
+    let error = null;
+    let isListening = false;
+    let abortController = null;
+
+    const startOtpListener = async () => {
+
+        // check is supported
+        if (!('OTPCredential' in window)) {
+            error = 'Web OTP API not supported';
+            return null;
+        }
+        // abort old listener
+        abort();
+        try {
+            console.log('1 - befor get');
+            isListening = true;
+            error = null;
+            abortController = new AbortController();
+            // abort after 3 min
+            const timeoutId = setTimeout(() => {
+                console.log('TIMEOUT FIRED');
+                abortController?.abort();
+            }, 180000);
+            console.log('2 - start listening');
+            const otp = await (navigator.credentials.get)({
+                otp: { transport: ['sms'] },
+                signal: abortController.signal,
+            })
+            console.log('3 - get resolved', otp);
+            console.log('4 - CODE', otp.code);
+            clearTimeout(timeoutId);
+            console.log('5 - clear timeout');
+            // set otp
+            if (otp?.code) {
+                return otp.code;
+            } else {
+                return null;
+            }
+        } catch (err) {
+            console.log('REJECTED');
+            console.log('NAME', err?.name);
+            console.log('MSG', err?.message);
+            switch (err.name) {
+                case 'AbortError':
+                    error = 'timeout aborted';
+                    break;
+                case 'NotAllowedError':
+                    error = 'access denied';
+                    break;
+                case 'SecurityError':
+                    error = 'must be Https';
+                    break;
+                default:
+                    error = err.message ?? 'unknown error';
+            }
+            return null;
+        } finally {
+            isListening = false;
+        }
+    };
+
+    const abort = () => {
+        abortController?.abort();
+        abortController = null;
+        isListening = false;
+    }
+
+    const reset = () => {
+        abort();
+        otp = null;
+        error = null;
+    }
+
+    const testOtpCreditional = () => {
+        //  if (import.meta.env.DEV) {
+        (window).OTPCredential ??= class OTPCredential { };
+        navigator.credentials.get = (async () => {
+            console.log('mock get called');
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            console.log('mock get received');
+            return { code: '1258' };
+        });
+        //  }
+    }
+
+    const startSmsListening = async () => {
+
+        const code = await startOtpListener();
+        if (code) {
+            console.log('OTP code is :', code);
+            const otpField = document.getElementById('otp-input');
+            otpField.value = code;
+        }
+    }
+
+    const test = () => {
+        testOtpCreditional();
+        startSmsListening();
+    }
+</script>
