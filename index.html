@@ -12,11 +12,15 @@
                 Enter the digit you received
             </p>
             <div id="otp-field">
-                 <label for="otp-input">digit code</label>
+                <label for="otp-input">digit code</label>
                 <input type="text" inputmode="numeric" is="web-otp" id="otp-input" autocomplete="one-time-code"
                     pattern="^([0-9]+)$" required />
-                <button onclick="startSmsListening()" style="background-color: green; color:#ffffff;padding: 10px; margin: 10px;">START LISSENING</button>
-                <button onclick="test()" style="background-color: orange; color:#000000;padding: 10px; margin: 10px;">TEST 5 second</button>
+                <button onclick="startSmsListening()"
+                    style="background-color: green; color:#ffffff;padding: 10px; margin: 10px;">START LISSENING</button>
+                <button onclick="test()"
+                    style="background-color: orange; color:#000000;padding: 10px; margin: 10px;">TEST 5 second</button>
+                <div id="otp-waite" style="display: inline-block; width: 50px; height: 20px;border: 1px solid #000; background-color:bisque; color: blue;">
+                </div>
             </div>
         </form>
     </main>
@@ -104,11 +108,74 @@
         (window).OTPCredential ??= class OTPCredential { };
         navigator.credentials.get = (async () => {
             console.log('mock get called');
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            await new Promise(resolve => {
+                const otpWaite = document.getElementById('otp-waite');
+                otpWaite.innerHTML = timeLine(15);
+                let counter = 15
+                const intervalid = setInterval(() => {
+                    counter = counter - 3;
+                    otpWaite.innerHTML = timeLine(counter);
+                }, 1000);
+                setTimeout(() => {
+                    clearInterval(intervalid);
+                    resolve();
+                }, 5000);
+
+            });
             console.log('mock get received');
             return { code: '1258' };
         });
         //  }
+    }
+
+    const timeLine = (count) => {
+        if (count == 1) {
+            return '|'
+        }
+        if (count == 2) {
+            return '||'
+        }
+        if (count == 3) {
+            return '|||'
+        }
+        if (count == 4) {
+            return '||||'
+        }
+        if (count == 5) {
+            return '|||||'
+        }
+        if (count == 6) {
+            return '||||||'
+        }
+        if (count == 7) {
+            return '|||||||'
+        }
+        if (count == 8) {
+            return '||||||||'
+        }
+        if (count == 9) {
+            return '|||||||||'
+        }
+        if (count == 10) {
+            return '||||||||||'
+        }
+        if (count == 11) {
+            return '|||||||||||'
+        }
+        if (count == 12) {
+            return '||||||||||||'
+        }
+        if (count == 13) {
+            return '|||||||||||||'
+        }
+        if (count == 14) {
+            return '||||||||||||||'
+        }
+        if (count == 15) {
+            return '|||||||||||||||'
+        }else{
+            return '';
+        }
     }
 
     const startSmsListening = async () => {
